@@ -1,5 +1,6 @@
 export type Monster = {
     id: string,
+    current_map: string,
     hp: number,
     x: number,
     y: number,

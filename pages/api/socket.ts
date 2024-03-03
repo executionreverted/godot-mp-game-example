@@ -10,6 +10,7 @@ import { Server } from "socket.io"
 import { players } from "@/services/playerService"
 import { initSpawner } from "@/socket/initSpawner"
 import { handleMapMonsters } from "@/socket/handleMapMonsters"
+import { handleAttackMonster } from "@/socket/handleAttackMonster"
 
 
 
@@ -49,6 +50,7 @@ export default function SocketHandler(_req: NextApiRequest, res: NextApiResponse
         // todo, get player map first and use here
         socket.timeout(1000).emit('map_monsters', spawner.getMonstersInMap("0"))
         handleMapMonsters(io, socket, spawner)
+        handleAttackMonster(io, socket, spawner)
         emitPlayerList(io, socket)
         handleUpdatePos(io, socket)
         handleDisconnect(io, socket)

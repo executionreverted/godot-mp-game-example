@@ -15,6 +15,8 @@ declare global {
         update_player_pos: any
         log_all_players: any
         load_monster: any
+        hit_monster: any
+        update_monster: any
     }
 }
 
@@ -43,8 +45,8 @@ export default function useInjectMethods() {
 
             if (!isGodotReady) return
             if (socket) {
-                console.log('Set godot methods "update_player_pos"');
                 injected.current = true;
+                console.log('Set godot methods "update_player_pos"');
                 window.update_player_pos = (x: any, y: any) => {
                     if (x == my_last_pos.x && y == my_last_pos.y) {
                         console.log('Position is same');
@@ -53,6 +55,11 @@ export default function useInjectMethods() {
                     console.log('emitting position,', [x, y]);
                     socket.emit('update_pos', [x, y])
                     my_last_pos = { x, y }
+                }
+
+                window.hit_monster = (monsterId: string) => {
+                    console.log('Client send hit to ', monsterId);
+                    socket.emit('hit_monster', monsterId)
                 }
 
                 window.web3_connect = () => {

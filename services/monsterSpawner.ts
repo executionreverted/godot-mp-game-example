@@ -1,7 +1,7 @@
 import { GameMap } from "@/types/map.type"
 import { Maps } from "./gameMapService"
 import { Monster } from "@/types/monster.type"
-import { MonsterList } from "./monsterService"
+import { AIMonster, MonsterList } from "../types/AIMonster"
 import moment from "moment"
 import { Server, Socket } from "socket.io"
 
@@ -9,7 +9,7 @@ export class MonsterSpawner {
     socket: Server
     mapsData: { [id: string]: GameMap } = {}
     mapsToSpawn: string[] = []
-    mapMonsters: { [id: string]: Monster[] } = {}
+    mapMonsters: { [id: string]: AIMonster[] } = {}
     nextSpawnTimes: { [id: string]: string } = {}
 
     constructor(socket_: Server, _mapsToSpawn: string[] = []) {
@@ -31,7 +31,7 @@ export class MonsterSpawner {
     doJob() {
         this.mapsToSpawn?.forEach(mapId => {
             const map = this.mapsData[mapId]
-            if (moment(this.nextSpawnTimes[mapId]).isBefore(Date.now()) && map.current_alive_mobs < map.max_alive_mobs) {
+            if (moment(this.nextSpawnTimes[mapId]).isBefore(Date.now()) && this.getMonsterCountOfMap(mapId) < map.max_alive_mobs) {
                 this.spawnMobInMap(map)
             }
         })
@@ -42,31 +42,14 @@ export class MonsterSpawner {
         console.log(`Next spawn for map ${map.id} is ${this.nextSpawnTimes[map.id]}`);
         const newMonster: Monster = this.pickRandomMonster(map.spawnable_mobs)
         newMonster.unique_id = Math.floor(Math.random() * 99999999).toString()
-        const { x, y } = this.randomSpawnPos(map)
-        newMonster.x = x
-        newMonster.y = y
-        this.mapsData[map.id].current_alive_mobs++
-        this.mapMonsters[map.id].push(Object.assign({}, newMonster))
-        this.socket.emit("spawn_mob", [newMonster])
-        console.log(`Spawning mob in Map ${map.id}, with position X: ${x} Y: ${y}`);
-        console.log(newMonster);
-        
+        newMonster.current_map = map.id
+        const baseMonsters = Object.assign({}, newMonster)
+        const newAIMonster = new AIMonster(baseMonsters, this.socket)
+        this.mapMonsters[map.id].push(newAIMonster)
+        this.socket.emit("spawn_mob", [newAIMonster.getMonster()])
+        console.log(`Spawning mob in Map ${map.id}, with position ${newAIMonster.getPosition().x},${newAIMonster.getPosition().y}`);
     }
 
-    randomSpawnPos(map: GameMap): { x: number, y: number } {
-        const minX = map.spawn_rect_x[0]
-        const maxX = map.spawn_rect_x[1]
-        const minY = map.spawn_rect_y[0]
-        const maxY = map.spawn_rect_y[1]
-
-        const xDiff = maxX - minX
-        const x = Math.floor(Math.random() * xDiff) + minX
-
-        const yDiff = maxY - minY
-        const y = Math.floor(Math.random() * yDiff) + minY
-
-        return { x, y }
-    }
 
     pickRandomMonster(list: string[] = []): Monster {
         const l = list.length
@@ -74,6 +57,32 @@ export class MonsterSpawner {
     }
 
     getMonstersInMap(id: string) {
-        return this.mapMonsters[id] || []
+        return this.mapMonsters[id].map(m => m.getMonster()) || []
+    }
+    getMonsterCountOfMap(id: string) {
+        return this.mapMonsters[id].length
+    }
+
+    hitMonster(mapId: string, playerId: string, monsterId: string) {
+        const monsterIdx = this.mapMonsters[mapId].findIndex(a => a.getMonster().unique_id == monsterId)
+        if (monsterIdx == -1) {
+            console.log('Cannot find this monster in map.. probably dead');
+            return
+        }
+
+        const mob = this.mapMonsters[mapId][monsterIdx]
+        // will be dynamic and calculated according to player stats later
+        const damage = 1
+
+        if (mob) {
+            mob.hit(damage, playerId)
+            if (!mob.isAlive()) {
+                // handle dead
+                console.log('dead');
+                this.mapMonsters[mapId].splice(monsterIdx, 1)
+            }
+
+            this.socket.emit('update_monster', mob.getMonster())
+        }
     }
 }

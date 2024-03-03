@@ -39,8 +39,8 @@ export const SocketProvider: React.FC<SocketContextProps> = ({ children }) => {
     const [socket, setSocket] = useState<any>()
 
     useEffect(() => {
-        console.log({isGodotReady});
-        
+        console.log({ isGodotReady });
+
         if (!isGodotReady || socket) return;
         var newSocket = io(`:${PORT + 1}`, {
             auth: {
@@ -84,11 +84,16 @@ export const SocketProvider: React.FC<SocketContextProps> = ({ children }) => {
                 window.load_monster(mob)
             });
         })
+        newSocket.on('update_monster', (data) => {
+            if (!data) return
+            window.update_monster(data)
+        })
+
 
         newSocket.on('map_monsters', (data) => {
             if (!data) return
-            console.log({monsters:data});
-            
+            console.log({ monsters: data });
+
             data.forEach((mob: any) => {
                 window.load_monster(mob)
             });
