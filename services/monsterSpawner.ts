@@ -69,11 +69,9 @@ export class MonsterSpawner {
             console.log('Cannot find this monster in map.. probably dead');
             return
         }
-
         const mob = this.mapMonsters[mapId][monsterIdx]
         // will be dynamic and calculated according to player stats later
         const damage = 1
-
         if (mob) {
             mob.hit(damage, playerId)
             if (!mob.isAlive()) {
@@ -81,7 +79,6 @@ export class MonsterSpawner {
                 console.log('dead');
                 this.mapMonsters[mapId].splice(monsterIdx, 1)
             }
-
             this.socket.emit('update_monster', mob.getMonster())
         }
     }

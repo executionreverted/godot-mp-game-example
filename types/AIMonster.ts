@@ -2,10 +2,11 @@ import { Monster } from "@/types/monster.type";
 import { Maps } from "../services/gameMapService";
 import { GameMap } from "@/types/map.type";
 import { Server } from "socket.io";
-import { Vec2 } from "@/utils/geometry";
+import { Vec2, distanceBetweenPoints } from "@/utils/geometry";
 import { AIMonsterBus } from "@/services/eventBus";
 import { NavManager } from "./NavigationManager";
 import { players } from "@/services/playerService";
+
 export const MonsterList: Monster[] = [
     {
         hp: 2,
@@ -14,7 +15,10 @@ export const MonsterList: Monster[] = [
         unique_id: "123",
         spawn_cooldown: 3,
         x: 0,
-        y: 0
+        y: 0,
+        attack_cooldown: 3,
+        damage: 1,
+        aggro_radius: 4
     }
 ]
 
@@ -49,16 +53,32 @@ export class AIMonster {
 
     movementHandler() {
         if (!this.movementEnabled) return
+        this.scanPlayers()
         if (this.chase) {
-            console.log(`GOTTA CHASE YOU BASTARD `, this.chaseTarget);
             if (this.chaseTarget) {
                 var targetPlayer = players[this.chaseTarget]
-                if(targetPlayer) {
-                    this.targetPosition.x = Math.floor(players[this.chaseTarget].x / 16)
-                    this.targetPosition.y = Math.floor(players[this.chaseTarget].y / 16)
+                if (targetPlayer) {
+                    console.log(`GOTTA CHASE YOU BASTARD `, this.chaseTarget);
+                    var playerPos = players[this.chaseTarget]
+                    if (playerPos) {
+                        var normalized = {
+                            x: Math.floor(playerPos.x / 16),
+                            y: Math.floor(playerPos.y / 16)
+                        }
+                        var distance = distanceBetweenPoints(normalized, this.targetPosition)
+                        if (distance > this.baseMonster.aggro_radius * 2) {
+                            console.log('You are too far.. im going back');
+                            this.chase = false
+                            this.chaseTarget = ""
+                        } else {
+                            console.log("RUNNNN");
+                            this.targetPosition = normalized
+                        }
+                    }
                 }
             }
         }
+
         if (this.cantMove()) {
             // Roll a dice for random movement
             const shouldMove = this.diceRoll(20)
@@ -106,6 +126,19 @@ export class AIMonster {
                 x: this.baseMonster.x,
                 y: this.baseMonster.y
             })
+        }
+    }
+
+    scanPlayers() {
+        const player = NavManager.scanRadius(this.baseMonster.x, this.baseMonster.y, this.baseMonster.aggro_radius)
+        if (player) {
+            this.chase = true
+            this.chaseTarget = player
+            console.log(`found ${player} around me.. gotta chase`);
+        } else {
+            this.chase = false
+            this.chaseTarget = ""
+            console.log(`nothing to chase today..`);
         }
     }
 

@@ -28,7 +28,7 @@ class NavigationManager {
             this.occupiedGrid[x] = {};
             this.occupiedBy[x] = {};
         }
-        console.log('Occupy Cell ', x, ' ', y, ' Occupied by ', occupier);
+        // console.log('Occupy Cell ', x, ' ', y, ' Occupied by ', occupier);
         this.occupiedGrid[x][y] = true;
         this.occupiedBy[x][y] = occupier;
     }
@@ -38,7 +38,7 @@ class NavigationManager {
             this.occupiedGrid[x] = {};
             this.occupiedBy[x] = {};
         }
-        console.log('Free grid ', x, ' ', y);
+        // console.log('Free grid ', x, ' ', y);
         this.occupiedGrid[x][y] = false;
         this.occupiedBy[x][y] = "";
     }
@@ -49,6 +49,30 @@ class NavigationManager {
 
     getOccupierType(x: number, y: number): string {
         return this.occupiedBy[x][y]
+    }
+
+    scanRadius(centerX: number, centerY: number, radius: number): string {
+        let closestPlayer: string = "";
+        let closestDistanceSq = Number.MAX_SAFE_INTEGER;
+
+        for (let x = centerX - radius; x <= centerX + radius; x++) {
+            for (let y = centerY - radius; y <= centerY + radius; y++) {
+                if (!this.occupiedGrid[x]) {
+                    this.occupiedGrid[x] = {};
+                    this.occupiedBy[x] = {};
+                }
+                const occType = this.getOccupierType(x, y)
+                if (this.isOccupied(x, y) && occType !== 'mob') {
+                    const distanceSq = (x - centerX) ** 2 + (y - centerY) ** 2;
+                    if (distanceSq < closestDistanceSq) {
+                        closestDistanceSq = distanceSq;
+                        closestPlayer = occType;
+                    }
+                }
+            }
+        }
+        
+        return closestPlayer;
     }
 }
 
