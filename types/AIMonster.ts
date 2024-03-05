@@ -18,7 +18,7 @@ export const MonsterList: Monster[] = [
         y: 0,
         attack_cooldown: 3,
         damage: 1,
-        aggro_radius: 4
+        aggro_radius: 3
     }
 ]
 
@@ -104,8 +104,18 @@ export class AIMonster {
                 x: this.baseMonster.x,
                 y: this.baseMonster.y
             })
-            const directionX = Math.round(deltaX / distance);
-            const directionY = Math.round(deltaY / distance);
+
+            let directionX = 0;
+            let directionY = 0;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                directionX = Math.sign(deltaX);
+            } else {
+                directionY = Math.sign(deltaY);
+            }
+
+            // const directionX = Math.round(deltaX / distance);
+            // const directionY = Math.round(deltaY / distance);
 
             const newPos = {
                 x: this.baseMonster.x + (directionX * speed),

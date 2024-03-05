@@ -12,8 +12,6 @@ import { initSpawner } from "@/socket/initSpawner"
 import { handleMapMonsters } from "@/socket/handleMapMonsters"
 import { handleAttackMonster } from "@/socket/handleAttackMonster"
 
-
-
 export const config = {
     api: {
         bodyParser: false,

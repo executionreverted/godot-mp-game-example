@@ -82,4 +82,13 @@ export class MonsterSpawner {
             this.socket.emit('update_monster', mob.getMonster())
         }
     }
+
+    getMonsterById(id: string, mapId: string) {
+        const monsterIdx = this.mapMonsters[mapId].findIndex(a => a.getMonster().unique_id == id)
+        if (monsterIdx == -1) {
+            console.log('Cannot find this monster in map.. probably dead');
+            return null
+        }
+        return this.mapMonsters[mapId][monsterIdx].getMonster()
+    }
 }
