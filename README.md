@@ -1,3 +1,16 @@
+It was my weekend project to check how can I utilize socket.io with godot.
+
+
+i don't remember when i did this. but - if it is still working - it should have abilities to 
+
+render a godot game, 
+connect to socket io backend, 
+spawn monsters with very basic AI.
+sync multiple users in same map, 
+teleport from one map to another,
+u might need to do some login stuff and get keys using login apis from an external tool like Postman or Insomnia
+
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
